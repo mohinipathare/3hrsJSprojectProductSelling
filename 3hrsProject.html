@@ -1,0 +1,108 @@
+<html>
+    <body>
+        <form  onsubmit="saveToLocalStorage(event)">
+            <label> Selling Price</label>
+            <input id='selling_price' type="text" name="selling_price"  required/>
+            <label> Product Name</label>
+            <input id='Product_Name' type="text" name="Product_Name"  required/>
+           
+            <button> Submit </button>
+            <h3>Products</h3>
+        </form>
+        <ul id='listOfProducts'></ul>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.min.js"></script>
+        <script>
+            let sum=0;
+            function saveToLocalStorage(event) {
+                event.preventDefault();
+                const selling_price = event.target.selling_price.value;
+                const Product_Name= event.target.Product_Name.value;
+                const obj = {
+                    selling_price,
+                    Product_Name
+                }
+                axios.post("https://www.crudcrud.com/api/de61d4ab7ef24e308cd17a753f3e254d/productdetails",obj)
+                .then((Response)=>{
+                    showNewProductOnScreen(Response.data);
+                    console.log(Response);
+                })
+               .catch((err=>{
+                document.body.innerHTML=document.body.innerHTML+"<h4>something went wrong</h4>";
+                console.log(err);
+
+               })) 
+            }
+
+            window.addEventListener("DOMContentLoaded", () => {
+                axios.get("https://www.crudcrud.com/api/de61d4ab7ef24e308cd17a753f3e254d/productdetails")
+                .then((Response)=>{
+
+                    for(var i=0;i<Response.data.length;i++)
+                    {
+                        showNewProductOnScreen(Response.data[i]);
+                    }
+                    const parentNode = document.getElementById('listOfProducts');
+                    for(var i=0;i<Response.data.length;i++)
+                     {
+                    sum=sum+(+Response.data[i].selling_price);
+                    }
+                    const childHTML=`Total value of products is ${sum}`;
+                    parentNode.innerHTML = parentNode.innerHTML + childHTML;
+                    })
+                .catch((err)=>
+                {
+                    console.log(err)
+                })
+            })
+            
+            function showNewProductOnScreen(product){
+                document.getElementById('selling_price').value = '';
+                document.getElementById('Product_Name').value ='';
+                if(localStorage.getItem(product.selling_price) !== null)
+                {
+                    removeProductFromScreen(product.selling_price)
+
+                }
+               
+                const parentNode = document.getElementById('listOfProducts');
+                const childHTML = `<li id=${product._id}> ${product.selling_price} - ${product.Product_Name}
+                                        <button onclick=deleteProduct('${product._id}')> Delete Product </button>
+                                        <button onclick=editProductDetails('${product.selling_price}','${product.Product_Name}','${product._id}')>Edit product </button>
+                                     </li>`
+                
+                parentNode.innerHTML = parentNode.innerHTML + childHTML;
+
+            }
+            
+            function editProductDetails(selling_price,Product_Name,productId){
+
+                document.getElementById('selling_price').value = selling_price;
+                document.getElementById('Product_Name').value = Product_Name;
+                deleteProduct(productId)
+             }
+            function deleteProduct(productId){
+                axios.delete(`https://www.crudcrud.com/api/de61d4ab7ef24e308cd17a753f3e254d/productdetails/${productId}`)
+                .then((Response)=>
+                {
+                    removeProductFromScreen(productId);
+                })
+                .catch((err)=>
+                {
+                 console.log(err);
+                })
+                removeProductFromScreen(productId);
+                //substractionOfSellingPrice(productId);
+
+            }
+            function removeProductFromScreen(productId){
+                const parentNode = document.getElementById('listOfProducts');
+                const childNodeToBeDeleted = document.getElementById(productId);
+                if(childNodeToBeDeleted) {
+                    parentNode.removeChild(childNodeToBeDeleted)
+                    sum=sum-(+productId.selling_price);
+                    
+                }
+            }
+       </script>
+    </body>
+</html>
